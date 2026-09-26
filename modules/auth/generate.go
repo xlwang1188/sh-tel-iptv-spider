@@ -289,7 +289,7 @@ func GenerateM3u8(udpxy, scheme, xteve, all string) []byte {
 					catchHost = u.Host
 				}
 			}
-			catchupSource = fmt.Sprintf("http://%s/api/catchup?id=%s&start={utc}&end={utcend}&lutc={lutc}&duration={duration}&playseek={utc:YmdHMS}-{utcend:YmdHMS}", catchHost, info.MixNo)
+			catchupSource = fmt.Sprintf("http://%s/api/catchup?id=%s&start={utc}&end={utcend}&s=${start}&e=${end}&playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}&duration={duration}", catchHost, info.MixNo)
 		}
 
 		m3uWriter.WriteWithCatchup(uri, catchupSource, info, m3u8Mapping)

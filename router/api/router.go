@@ -145,8 +145,10 @@ func catchup(ctx iris.Context) {
 	lutc := ctx.FormValue("lutc")
 	start := ctx.FormValue("start")
 	end := ctx.FormValue("end")
-	durationStr := ctx.FormValue("duration")
+	s := ctx.FormValue("s")
+	e := ctx.FormValue("e")
 	timestamp := ctx.FormValue("timestamp")
+	durationStr := ctx.FormValue("duration")
 
 	cst := time.FixedZone("CST", 8*3600)
 	now := time.Now().In(cst)
@@ -155,18 +157,18 @@ func catchup(ctx iris.Context) {
 	var startSec int64 = 0
 	var endSec int64 = 0
 
-	// 1. 尝试从 start / utc / timestamp 提取开始时间戳
-	for _, sVal := range []string{utc, start, timestamp} {
-		if s := parseTimeValue(sVal, cst); s > 0 {
-			startSec = s
+	// 1. 尝试从 start / s / utc / timestamp 提取开始时间戳
+	for _, sVal := range []string{s, utc, start, timestamp} {
+		if t := parseTimeValue(sVal, cst); t > 0 {
+			startSec = t
 			break
 		}
 	}
 
-	// 尝试从 utcend / end / lutc 提取结束时间戳
-	for _, eVal := range []string{utcend, end, lutc} {
-		if s := parseTimeValue(eVal, cst); s > 0 {
-			endSec = s
+	// 尝试从 e / utcend / end / lutc 提取结束时间戳
+	for _, eVal := range []string{e, utcend, end, lutc} {
+		if t := parseTimeValue(eVal, cst); t > 0 {
+			endSec = t
 			break
 		} else if dur, err := strconv.ParseInt(eVal, 10, 64); err == nil && dur > 0 && dur < 86400*7 && startSec > 0 {
 			endSec = startSec + dur
