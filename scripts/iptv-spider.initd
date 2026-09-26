@@ -1,0 +1,24 @@
+#!/sbin/openrc-run
+# OpenRC init script for Alpine Linux
+
+name="iptv-spider"
+description="Shanghai Telecom IPTV Spider & Catchup Acceleration Service"
+command="/home/xlwang/sh-tel-iptv-spider/iptv-spider"
+command_args=""
+command_background="yes"
+command_user="xlwang:xlwang"
+directory="/home/xlwang/sh-tel-iptv-spider"
+pidfile="/run/iptv-spider.pid"
+output_log="/home/xlwang/sh-tel-iptv-spider/log/service.log"
+error_log="/home/xlwang/sh-tel-iptv-spider/log/service.err"
+
+depend() {
+    need net
+    after firewall
+}
+
+start_pre() {
+    mkdir -p /home/xlwang/sh-tel-iptv-spider/log
+    mkdir -p /home/xlwang/hls_cache
+    chown -R xlwang:xlwang /home/xlwang/hls_cache
+}

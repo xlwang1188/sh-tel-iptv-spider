@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+# OpenRC service script for rtp2httpd on Alpine Linux
+
+name="rtp2httpd"
+description="IPTV RTP/RTSP to HTTP Proxy Service"
+
+command="/usr/local/bin/rtp2httpd"
+command_args="--config /etc/rtp2httpd/rtp2httpd.conf"
+command_user="root"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+output_log="/var/log/rtp2httpd.log"
+error_log="/var/log/rtp2httpd.err"
+
+prestart() {
+    checkpath -f -m 0644 "$output_log" "$error_log"
+}
+
+depend() {
+    need net
+    after firewall
+}

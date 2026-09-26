@@ -1,0 +1,16 @@
+[Unit]
+Description=Shanghai Telecom IPTV Spider & Catchup Acceleration Service
+After=network.target
+
+[Service]
+Type=simple
+User=xlwang
+Group=xlwang
+WorkingDirectory=/home/xlwang/sh-tel-iptv-spider
+ExecStart=/home/xlwang/sh-tel-iptv-spider/iptv-spider
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

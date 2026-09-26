@@ -1,0 +1,38 @@
+# Root Binaries
+/iptv-spider
+/iptv-spider.orig
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and capture artifacts
+*.pcap
+*.pcapng
+*.ts
+*.tmp.*
+*.preload.*
+
+# Database and logs
+spider.db
+spider.db-journal
+spider.db-wal
+spider.db-shm
+log/
+latest_log
+
+# OS & Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Sensitive local config & environment files (keep .example in git)
+config.yaml
+config.local.yaml
+.env
+.env.*
+!.env.example

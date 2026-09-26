@@ -1,0 +1,13 @@
+[Unit]
+Description=IPTV RTP/RTSP to HTTP Proxy Service (rtp2httpd)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/rtp2httpd --config /etc/rtp2httpd/rtp2httpd.conf
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

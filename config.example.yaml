@@ -1,0 +1,66 @@
+# Shanghai Telecom IPTV Spider Configuration Template
+# 上海电信 IPTV 爬虫与回看代理服务配置文件模板
+
+system:
+  env: 'public'
+  addr: '0.0.0.0:8888' # 监听地址及端口
+  db-type: 'sqlite'     # 数据库类型：sqlite (推荐无外置依赖) 或 mysql
+  oss-type: 'minio'
+
+stb:
+  uid: '4833xxxx@etv4'                 # IPTV 业务账号（从机顶盒设置/用户账号中查看）
+  mac: '18:5e:0b:xx:xx:xx'             # 真实机顶盒网卡物理 MAC 地址 (小写)
+  sn: '00030032540702305260xxxx'       # 真实机顶盒序列号 SN
+  ip: '30.120.xx.xx'                   # 机顶盒通过 IPoE/DHCP 从电信内网获取到的 IP
+  type: 'B860AV2.1-T'                  # 机顶盒硬件型号（如中兴 B860AV2.1-T、华为悦盒等）
+  auth_host: '222.68.208.73:7001'      # 电信 EPG 认证服务器地址
+
+epg:
+  generator: 'Deny'
+  source: 'Shanghai Telecom Iptv Spider'
+  xml_url: 'http://172.16.0.5:8888/api/epg.xml' # 本机局域网对外 EPG XML 访问地址
+  fetch_cron: '0 0 8,16,23 * * *'               # EPG 自动拉取定时任务 (Cron)
+  rtsp_url: 'http://172.16.0.5:5140/rtsp/'      # RTSP 转流代理前缀（如通过 msx/rtsp-proxy）
+  rtp_url: 'http://172.16.0.5:5140/rtp/'        # 组播 RTP 转单播代理前缀 (udpxy)
+  logo_url: 'http://172.16.0.5:8888/logo/'      # 台标图标资源前缀
+  playseek: "&playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}"
+
+  # 额外自定义 4K 频道及组播映射
+  channel_mappings:
+    - id: '101'
+      igmp: 'igmp://233.18.204.224:5140'
+      name: "东方卫视4K"
+      logo: "东方卫视4K.png"
+      group: "4K频道"
+    - id: '124'
+      igmp: 'igmp://233.18.204.188:5140'
+      name: "CCTV-4K"
+      logo: "CCTV4K.png"
+      group: "4K频道"
+    - id: '139'
+      igmp: 'igmp://233.18.204.114:5140'
+      name: "CCTV16-4K"
+      logo: "CCTV16-4K.png"
+      group: "4K频道"
+
+  name_sequence: 
+    - name: "CCTV-4K"
+    - name: "CCTV16-4K"
+    - name: "东方卫视4K"
+
+cache:
+  type: memory
+  prefix: 'CM'
+  memory_interval: 60
+  default_timeout: 240
+
+zap:
+  level: 'info'
+  format: 'console'
+  prefix: '[iptv-spider-sh]'
+  director: 'log'
+  link-name: 'latest_log'
+  show-line: false
+  encode-level: 'LowercaseColorLevelEncoder'
+  stacktrace-key: 'stacktrace'
+  log-in-console: true
