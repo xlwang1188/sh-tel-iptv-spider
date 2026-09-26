@@ -29,6 +29,8 @@ latest_log
 *.swo
 .DS_Store
 Thumbs.db
+*.bak
+*.new
 
 # Sensitive local config & environment files (keep .example in git)
 config.yaml
