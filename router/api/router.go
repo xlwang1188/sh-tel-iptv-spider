@@ -82,21 +82,42 @@ func InitApiRouters(rg iris.Party) {
 	rg.Get("/epg", generateXmlTv)
 	rg.Get("/epg.xml", generateXmlTv)
 
-	rg.Get("/catchup", catchup)
-	rg.Head("/catchup", catchup)
-	rg.Options("/catchup", catchup)
-	rg.Get("/proxy/segment.ts", proxySegment)
-	rg.Head("/proxy/segment.ts", proxySegment)
-	rg.Options("/proxy/segment.ts", proxySegment)
-	rg.Get("/proxy/ts", proxySegment)
-	rg.Head("/proxy/ts", proxySegment)
-	rg.Options("/proxy/ts", proxySegment)
+	rg.Any("/catchup", catchup)
+	rg.Any("/proxy/segment.ts", proxySegment)
+	rg.Any("/proxy/ts", proxySegment)
+}
+
+func parseTimeValue(val string, cst *time.Location) int64 {
+	val = strings.TrimSpace(val)
+	if val == "" || strings.HasPrefix(val, "{") || strings.HasPrefix(val, "%7B") || strings.HasPrefix(val, "${") {
+		return 0
+	}
+	// 14位格式：YYYYMMDDHHmmss
+	if len(val) == 14 {
+		if t, err := time.ParseInLocation("20060102150405", val, cst); err == nil {
+			return t.Unix()
+		}
+	}
+	// ISO 8601
+	if t, err := time.Parse(time.RFC3339, val); err == nil {
+		return t.Unix()
+	}
+	// 数字时间戳（秒或毫秒）
+	if s, err := strconv.ParseInt(val, 10, 64); err == nil && s > 0 {
+		if s > 1000000000000 { // 13位毫秒时间戳
+			s = s / 1000
+		}
+		if s >= 1000000000 && s < 3000000000 {
+			return s
+		}
+	}
+	return 0
 }
 
 func catchup(ctx iris.Context) {
 	if ctx.Method() == http.MethodOptions {
 		ctx.Header("Access-Control-Allow-Origin", "*")
-		ctx.Header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
+		ctx.Header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS, POST")
 		ctx.Header("Access-Control-Allow-Headers", "*")
 		ctx.StatusCode(http.StatusNoContent)
 		return
@@ -105,6 +126,16 @@ func catchup(ctx iris.Context) {
 	fmt.Printf("[CATCHUP_REQ] URL=%s, UA=%s\n", ctx.Request().URL.String(), ctx.Request().UserAgent())
 
 	id := ctx.FormValue("id")
+	if id == "" {
+		id = ctx.FormValue("channel_id")
+	}
+	if id == "" {
+		id = ctx.FormValue("channel")
+	}
+	if id == "" {
+		id = ctx.FormValue("ch")
+	}
+
 	stream := ctx.FormValue("stream")
 	playseek := ctx.FormValue("playseek")
 	playseek2 := ctx.FormValue("playseek2")
@@ -115,6 +146,7 @@ func catchup(ctx iris.Context) {
 	start := ctx.FormValue("start")
 	end := ctx.FormValue("end")
 	durationStr := ctx.FormValue("duration")
+	timestamp := ctx.FormValue("timestamp")
 
 	cst := time.FixedZone("CST", 8*3600)
 	now := time.Now().In(cst)
@@ -123,43 +155,32 @@ func catchup(ctx iris.Context) {
 	var startSec int64 = 0
 	var endSec int64 = 0
 
-	// 1. 尝试从 Unix 秒/毫秒时间戳提取
-	for _, sVal := range []string{utc, start} {
-		if sVal == "{utc}" || sVal == "{start}" || sVal == "%7Butc%7D" || sVal == "%7Bstart%7D" {
-			continue
-		}
-		if s, err := strconv.ParseInt(sVal, 10, 64); err == nil && s > 0 {
-			if s > 100000000000 {
-				s = s / 1000
-			}
-			if s >= 1000000000 {
-				startSec = s
-				break
-			}
+	// 1. 尝试从 start / utc / timestamp 提取开始时间戳
+	for _, sVal := range []string{utc, start, timestamp} {
+		if s := parseTimeValue(sVal, cst); s > 0 {
+			startSec = s
+			break
 		}
 	}
 
+	// 尝试从 utcend / end / lutc 提取结束时间戳
 	for _, eVal := range []string{utcend, end, lutc} {
-		if eVal == "{utcend}" || eVal == "{end}" || eVal == "{lutc}" || eVal == "%7Butcend%7D" || eVal == "%7Bend%7D" || eVal == "%7Blutc%7D" {
-			continue
-		}
-		if s, err := strconv.ParseInt(eVal, 10, 64); err == nil && s > 0 {
-			if s > 100000000000 {
-				s = s / 1000
-			}
-			if s >= 1000000000 {
-				endSec = s
-				break
-			} else if s < 86400*7 && startSec > 0 {
-				endSec = startSec + s
-				break
-			}
+		if s := parseTimeValue(eVal, cst); s > 0 {
+			endSec = s
+			break
+		} else if dur, err := strconv.ParseInt(eVal, 10, 64); err == nil && dur > 0 && dur < 86400*7 && startSec > 0 {
+			endSec = startSec + dur
+			break
 		}
 	}
 
 	// 2. 尝试从 playseek 中匹配 YYYYMMDDHHmmss-YYYYMMDDHHmmss
 	if startSec == 0 {
 		for _, ps := range []string{playseek, playseek2, playseek3} {
+			ps = strings.TrimSpace(ps)
+			if ps == "" || strings.HasPrefix(ps, "{") || strings.HasPrefix(ps, "%7B") || strings.HasPrefix(ps, "${") {
+				continue
+			}
 			if formattedSeekRegex.MatchString(ps) {
 				parts := strings.Split(ps, "-")
 				if len(parts) == 2 {
@@ -188,10 +209,16 @@ func catchup(ctx iris.Context) {
 		endSec = now.Add(-5 * time.Minute).Unix()
 	}
 
+	global.LOG.Info("Catchup request parsed",
+		zap.String("id", id),
+		zap.Int64("startSec", startSec),
+		zap.Int64("endSec", endSec),
+	)
+
 	// 4. 首选模式：通过 EPG 和 getTvodPlayUrl 获取原生高码率 HLS 流 (HTTP m3u8)
 	if id != "" {
 		var chInfo model.ChannelInfo
-		if err := global.DB.Where("mix_no = ?", id).First(&chInfo).Error; err == nil && chInfo.ChID != "" {
+		if err := global.DB.Where("mix_no = ? OR ch_id = ? OR comm_name = ?", id, id, id).First(&chInfo).Error; err == nil && chInfo.ChID != "" {
 			startMs := startSec * 1000
 			var prog model.EPGDetails
 			// 精确匹配覆盖请求时间的节目
@@ -233,7 +260,7 @@ func catchup(ctx iris.Context) {
 		targetBaseUrl = stream
 	} else if id != "" {
 		var channel model.Channel
-		if err := global.DB.Where("user_channel_id = ?", id).First(&channel).Error; err == nil && channel.TimeShiftURL != "" {
+		if err := global.DB.Where("user_channel_id = ? OR channel_name = ?", id, id).First(&channel).Error; err == nil && channel.TimeShiftURL != "" {
 			trimmed := strings.TrimPrefix(channel.TimeShiftURL, "rtsp://")
 			targetBaseUrl = fmt.Sprintf("%s%s", global.CONFIG.Epg.RtspUrl, trimmed)
 		}

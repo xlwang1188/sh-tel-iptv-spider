@@ -17,12 +17,12 @@ func (m *Writer) WriteHeaderWithInfo(xmlUrl string) {
 		m.WriteHeader()
 		return
 	}
-	m.buf.WriteString(fmt.Sprintf(`#EXTM3U url-tvg="%s" x-tvg-url="%s" tvg-url="%s"`, xmlUrl, xmlUrl, xmlUrl))
+	m.buf.WriteString(fmt.Sprintf(`#EXTM3U url-tvg="%s" x-tvg-url="%s" tvg-url="%s" catchup="default" catchup-days="7"`, xmlUrl, xmlUrl, xmlUrl))
 	m.buf.WriteString("\n")
 }
 
 func (m *Writer) WriteHeader() {
-	m.buf.WriteString("#EXTM3U \n")
+	m.buf.WriteString("#EXTM3U catchup=\"default\" catchup-days=\"7\"\n")
 }
 
 func (m *Writer) Write(uri string, info model.ChannelInfo, ext model.M3u8Mapping) {
@@ -45,9 +45,9 @@ func (m *Writer) WriteWithCatchup(uri string, catchup string, info model.Channel
 
 	m.buf.WriteString("\n")
 	if catchup != "" {
-		// 带回看地址
+		// 带回看地址：使用标准 default 回看模式与 catchup-source 模板联动
 		m.buf.WriteString(fmt.Sprintf(
-			`#EXTINF:-1 tvg-id="%s" tvg-name="%s" catchup="flussonic" catchup-days="7" tvg-rec="7" catchup-source="%s" tvg-logo="%s" group-title="%s",%s`,
+			`#EXTINF:-1 tvg-id="%s" tvg-name="%s" catchup="default" catchup-days="7" tvg-rec="7" catchup-source="%s" tvg-logo="%s" group-title="%s",%s`,
 			info.MixNo,
 			info.CommName,
 			catchup,

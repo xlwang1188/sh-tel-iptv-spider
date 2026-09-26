@@ -16,4 +16,9 @@ func InitRouters(app *iris.Application) {
 		api.InitApiRouters(apiRouterGroup)
 	}
 
+	// 注册根路径直达路由（兼容所有不带 /api/ 前缀的客户端请求）
+	rootRouterGroup := app.Party("/")
+	{
+		api.InitApiRouters(rootRouterGroup)
+	}
 }
