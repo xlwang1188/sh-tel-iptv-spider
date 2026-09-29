@@ -220,7 +220,7 @@ func catchup(ctx iris.Context) {
 	// 4. 首选模式：通过 EPG 和 getTvodPlayUrl 获取原生高码率 HLS 流 (HTTP m3u8)
 	if id != "" {
 		var chInfo model.ChannelInfo
-		if err := global.DB.Where("mix_no = ? OR ch_id = ? OR comm_name = ?", id, id, id).First(&chInfo).Error; err == nil && chInfo.ChID != "" {
+		if err := global.DB.Where("mix_no = ? OR ch_id = ? OR comm_name = ?", id, id, id).Order("is4_k desc, is_hd desc").First(&chInfo).Error; err == nil && chInfo.ChID != "" {
 			startMs := startSec * 1000
 			var prog model.EPGDetails
 			// 精确匹配覆盖请求时间的节目

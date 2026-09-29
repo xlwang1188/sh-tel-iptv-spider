@@ -187,12 +187,19 @@ func (c *Client) FetchChannelProg() {
 	p := "function/ajax/epg7getChannelByAjax.jsp"
 	uri := fmt.Sprintf("%s/%s", c.EPGHostUrl, p)
 
+	var allChannels []model.ChannelInfo
+	global.DB.Where("is_pull_epg = ? AND is_show = ?", true, true).
+		Order("is4_k desc, is_hd desc").
+		Find(&allChannels)
+
+	channelMap := make(map[string]model.ChannelInfo)
 	var channelInfoList []model.ChannelInfo
-	// 解决
-	global.DB.
-		Select("MAX(code) as code, MAX(ch_id) as ch_id, comm_name, MAX(last_fetch_time) as last_fetch_time, MAX(is_pull_epg) as is_pull_epg, MAX(is_show) as is_show").
-		Group("comm_name").
-		Find(&channelInfoList)
+	for _, ch := range allChannels {
+		if _, exists := channelMap[ch.CommName]; !exists {
+			channelMap[ch.CommName] = ch
+			channelInfoList = append(channelInfoList, ch)
+		}
+	}
 	now := carbon.Now()
 	for _, ch := range channelInfoList {
 		// 4 个小时之内更新过，跳过此次更新
