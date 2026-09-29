@@ -289,7 +289,12 @@ func GenerateM3u8(udpxy, scheme, xteve, all string) []byte {
 					catchHost = u.Host
 				}
 			}
-			catchupSource = fmt.Sprintf("http://%s/api/catchup?id=%s&start={utc}&end={utcend}&s=${start}&e=${end}&playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}&duration={duration}", catchHost, info.MixNo)
+			is4KChannel := strings.Contains(info.Name, "4K") || strings.Contains(info.CommName, "4K") || m3u8Mapping.CustomGroups == "4K频道"
+			if is4KChannel && channel.UserChannelID != "" && channel.UserChannelID != info.MixNo {
+				catchupSource = fmt.Sprintf("http://%s/api/catchup?id=%s&channel_id=%s&mode=timeshift&start={utc}&end={utcend}&s=${start}&e=${end}&playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}&duration={duration}", catchHost, info.MixNo, channel.UserChannelID)
+			} else {
+				catchupSource = fmt.Sprintf("http://%s/api/catchup?id=%s&start={utc}&end={utcend}&s=${start}&e=${end}&playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}&duration={duration}", catchHost, info.MixNo)
+			}
 		}
 
 		m3uWriter.WriteWithCatchup(uri, catchupSource, info, m3u8Mapping)

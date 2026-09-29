@@ -126,8 +126,12 @@ func catchup(ctx iris.Context) {
 	fmt.Printf("[CATCHUP_REQ] URL=%s, UA=%s\n", ctx.Request().URL.String(), ctx.Request().UserAgent())
 
 	id := ctx.FormValue("id")
+	channelID := ctx.FormValue("channel_id")
+	if channelID == "" {
+		channelID = ctx.FormValue("chid")
+	}
 	if id == "" {
-		id = ctx.FormValue("channel_id")
+		id = channelID
 	}
 	if id == "" {
 		id = ctx.FormValue("channel")
@@ -135,6 +139,7 @@ func catchup(ctx iris.Context) {
 	if id == "" {
 		id = ctx.FormValue("ch")
 	}
+	mode := ctx.FormValue("mode")
 
 	stream := ctx.FormValue("stream")
 	playseek := ctx.FormValue("playseek")
@@ -218,53 +223,65 @@ func catchup(ctx iris.Context) {
 	)
 
 	// 4. 首选模式：通过 EPG 和 getTvodPlayUrl 获取原生高码率 HLS 流 (HTTP m3u8)
+	// 如果客户端明确指定 mode=timeshift，并且该频道在电信 EPG 中不是真 4K (is4_k != 1)，跳过 1080P HLS 走 4K 时移
+	skipHls := (mode == "timeshift" || mode == "ts")
 	if id != "" {
 		var chInfo model.ChannelInfo
 		if err := global.DB.Where("mix_no = ? OR ch_id = ? OR comm_name = ?", id, id, id).Order("is4_k desc, is_hd desc").First(&chInfo).Error; err == nil && chInfo.ChID != "" {
-			startMs := startSec * 1000
-			var prog model.EPGDetails
-			// 精确匹配覆盖请求时间的节目
-			err := global.DB.Where("comm_name = ? AND start_time <= ? AND end_time > ?", chInfo.CommName, startMs, startMs).
-				Order("start_time desc").
-				First(&prog).Error
-			// 若没匹配到，在前后30分钟窗口内匹配最邻近节目
-			if err != nil {
-				err = global.DB.Where("comm_name = ? AND start_time >= ? AND start_time <= ?", chInfo.CommName, startMs-30*60*1000, startMs+30*60*1000).
-					Order("start_time asc").
+			if skipHls && !chInfo.Is4K {
+				global.LOG.Info("Catchup skipping 1080P HLS for 4K timeshift", zap.String("id", id), zap.String("channel_id", channelID))
+			} else {
+				startMs := startSec * 1000
+				var prog model.EPGDetails
+				// 精确匹配覆盖请求时间的节目
+				err := global.DB.Where("comm_name = ? AND start_time <= ? AND end_time > ?", chInfo.CommName, startMs, startMs).
+					Order("start_time desc").
 					First(&prog).Error
-			}
+				// 若没匹配到，在前后30分钟窗口内匹配最邻近节目
+				if err != nil {
+					err = global.DB.Where("comm_name = ? AND start_time >= ? AND start_time <= ?", chInfo.CommName, startMs-30*60*1000, startMs+30*60*1000).
+						Order("start_time asc").
+						First(&prog).Error
+				}
 
-			if err == nil && prog.ID != "" {
-				client := auth.GetGlobalClient()
-				if client != nil {
-					pStartSec := prog.StartTime / 1000
-					pEndSec := prog.EndTime / 1000
-					playUrl, err := client.FetchTvodPlayUrl(chInfo.ChID, prog.ID, pStartSec, pEndSec)
-					if err == nil && playUrl != "" {
-						global.LOG.Info("Catchup HLS found", zap.String("id", id), zap.String("prog", prog.Name), zap.String("url", playUrl))
-						if err := serveRewrittenM3u8(ctx, playUrl); err == nil {
-							return
+				if err == nil && prog.ID != "" {
+					client := auth.GetGlobalClient()
+					if client != nil {
+						pStartSec := prog.StartTime / 1000
+						pEndSec := prog.EndTime / 1000
+						playUrl, err := client.FetchTvodPlayUrl(chInfo.ChID, prog.ID, pStartSec, pEndSec)
+						if err == nil && playUrl != "" {
+							global.LOG.Info("Catchup HLS found", zap.String("id", id), zap.String("prog", prog.Name), zap.String("url", playUrl))
+							if err := serveRewrittenM3u8(ctx, playUrl); err == nil {
+								return
+							} else {
+								global.LOG.Warn("serveRewrittenM3u8 failed", zap.Error(err))
+								return
+							}
 						} else {
-							global.LOG.Warn("serveRewrittenM3u8 failed", zap.Error(err))
-							return
+							global.LOG.Warn("FetchTvodPlayUrl failed", zap.Error(err), zap.String("chID", chInfo.ChID), zap.String("playbillID", prog.ID))
 						}
-					} else {
-						global.LOG.Warn("FetchTvodPlayUrl failed", zap.Error(err), zap.String("chID", chInfo.ChID), zap.String("playbillID", prog.ID))
 					}
 				}
 			}
 		}
 	}
 
-	// 5. 兜底回退：如果 EPG 未匹配到或非 EPG 回看，走 RTSP 时移
+	// 5. 兜底回退：如果 EPG 未匹配到、指定时移或非 EPG 回看，走 RTSP 时移
 	var targetBaseUrl string
 	if stream != "" {
 		targetBaseUrl = stream
-	} else if id != "" {
-		var channel model.Channel
-		if err := global.DB.Where("user_channel_id = ? OR channel_name = ?", id, id).First(&channel).Error; err == nil && channel.TimeShiftURL != "" {
-			trimmed := strings.TrimPrefix(channel.TimeShiftURL, "rtsp://")
-			targetBaseUrl = fmt.Sprintf("%s%s", global.CONFIG.Epg.RtspUrl, trimmed)
+	} else {
+		targetId := channelID
+		if targetId == "" {
+			targetId = id
+		}
+		if targetId != "" {
+			var channel model.Channel
+			if err := global.DB.Where("user_channel_id = ? OR channel_id = ?", targetId, targetId).First(&channel).Error; err == nil && channel.TimeShiftURL != "" {
+				trimmed := strings.TrimPrefix(channel.TimeShiftURL, "rtsp://")
+				targetBaseUrl = fmt.Sprintf("%s%s", global.CONFIG.Epg.RtspUrl, trimmed)
+			}
 		}
 	}
 
@@ -295,7 +312,8 @@ func catchup(ctx iris.Context) {
 		sep = "?"
 	}
 	finalUrl := fmt.Sprintf("%s%splayseek=%s", targetBaseUrl, sep, targetSeek)
-	global.LOG.Info("Catchup RTSP fallback redirect", zap.String("id", id), zap.String("url", finalUrl))
+	global.LOG.Info("Catchup RTSP timeshift redirect", zap.String("id", id), zap.String("channel_id", channelID), zap.String("url", finalUrl))
+	ctx.Header("Access-Control-Allow-Origin", "*")
 	ctx.Redirect(finalUrl, iris.StatusFound)
 }
 
