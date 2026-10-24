@@ -32,9 +32,7 @@ Thumbs.db
 *.bak
 *.new
 
-# Sensitive local config & environment files (keep .example in git)
-config.yaml
+# Local config & environment files
 config.local.yaml
-.env
 .env.*
 !.env.example

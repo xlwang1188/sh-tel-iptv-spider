@@ -1,0 +1,180 @@
+# system configuration
+system:
+  env: 'public'
+  addr: '0.0.0.0:8888' # 监听地址
+  db-type: 'mysql'
+  oss-type: 'minio' # 可选值：minio、cos
+
+stb:
+  uid: '48331335@etv4'     # IPTV 用户名，打开你的iptv机顶盒，打开用户
+  mac: '18:5e:0b:33:a7:21' # 机顶盒Mac地址 
+  sn: '00030032540702305260124D' # 机顶盒SN码 
+  ip: '30.120.53.174'
+  type: 'B860AV2.1-T' # 机顶盒型号
+  auth_host: '222.68.208.73:7001' # 认证服务器地址
+
+#相关api
+#例子
+#http://172.16.0.96:8888/api/m3u8
+#http://172.16.0.96:8888/api/tsM3u8
+#http://172.16.0.96:8888/api/epg
+
+epg:
+  generator: 'Deny'
+  source: 'Shanghai Telecom Iptv Spider'
+  xml_url: 'http://172.16.0.5:8888/api/epg.xml'
+  fetch_cron: '0 0 8,16,23 * * *'
+  rtsp_url: 'http://172.16.0.5:5140/rtsp/'
+  rtp_url: 'http://172.16.0.5:5140/rtp/'
+  logo_url: 'http://172.16.0.5:8888/logo/'
+  #时移参数
+  playseek: "&playseek=${(b)yyyyMMddHHmmss}-${(e)yyyyMMddHHmmss}"
+  #自定义获取频道，针对节目单列表没有的频道
+  channel_mappings:
+    - id: '101'                            #tvg-id
+      igmp: 'igmp://233.18.204.224:5140'  #组播地址
+      name: "东方卫视4K"                  #定义名称 #tvg-name
+      logo: "东方卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '100'                            #tvg-id
+      igmp: 'igmp://233.18.204.115:5140'  #组播地址
+      name: "欢笑剧场4K"                  #定义名称 #tvg-name
+      logo: "欢笑剧场4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '105'                           #tvg-id
+      igmp: 'igmp://233.18.204.169:5140'  #组播地址
+      name: "BesTV4K电影"                 #定义名称 #tvg-name
+      logo: "BesTV4K电影.png"             #定义图片名称
+      group: "4K频道"                #显示名称
+    - id: '97'                           #tvg-id
+      igmp: 'igmp://233.18.204.170:5140'  #组播地址
+      name: "BesTV4K记录"                 #定义名称 #tvg-name
+      logo: "BesTV4K记录.png"             #定义图片名称
+      group: "4K频道"                #显示名称
+    - id: '139'                            #tvg-id
+      igmp: 'igmp://233.18.204.114:5140'  #组播地址
+      name: "CCTV16-4K"                   #定义名称 #tvg-name
+      logo: "CCTV16-4K.png"               #定义图片名称
+      group: "4K频道"                  #显示名称
+    - id: '124'                            #tvg-id
+      igmp: 'igmp://233.18.204.188:5140'  #组播地址
+      name: "CCTV-4K"                      #定义名称 #tvg-name
+      logo: "CCTV4K.png"                  #定义图片名称
+      group: "4K频道"                     #显示名称
+    - id: '144'                            #tvg-id
+      igmp: 'igmp://233.18.204.209:5140'  #组播地址
+      name: "北京卫视4K"                  #定义名称 #tvg-name
+      logo: "北京卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '145'                            #tvg-id
+      igmp: 'igmp://233.18.204.218:5140'  #组播地址
+      name: "广东卫视4K"                  #定义名称 #tvg-name
+      logo: "广东卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '143'                            #tvg-id
+      igmp: 'igmp://233.18.204.227:5140'  #组播地址
+      name: "湖南卫视4K"                  #定义名称 #tvg-name
+      logo: "湖南卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '142'                            #tvg-id
+      igmp: 'igmp://233.18.204.226:5140'  #组播地址
+      name: "江苏卫视4K"                  #定义名称 #tvg-name
+      logo: "江苏卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '148'                            #tvg-id
+      igmp: 'igmp://233.18.204.228:5140'  #组播地址
+      name: "山东卫视4K"                  #定义名称 #tvg-name
+      logo: "山东卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '146'                            #tvg-id
+      igmp: 'igmp://233.18.204.219:5140'  #组播地址
+      name: "深圳卫视4K"                  #定义名称 #tvg-name
+      logo: "深圳卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '156'                            #tvg-id
+      igmp: 'igmp://233.18.204.225:5140'  #组播地址
+      name: "四川卫视4K"                  #定义名称 #tvg-name
+      logo: "四川卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '141'                            #tvg-id
+      igmp: 'igmp://233.18.204.229:5140'  #组播地址
+      name: "浙江卫视4K"                  #定义名称 #tvg-name
+      logo: "浙江卫视4K.png"              #定义图片名称
+      group: "4K频道"                 #显示名称
+    - id: '104'                           #tvg-id
+      igmp: 'igmp://233.18.204.171:5140'  #组播地址
+      name: "BesTV4K动画"                 #定义名称 #tvg-name
+      logo: "BesTV4K动画.png"             #定义图片名称
+      group: "4K频道"                #显示名称
+
+  #排序表
+  name_sequence: 
+    - name: "CCTV-4K"
+    - name: "CCTV16-4K"
+    - name: "东方卫视4K"
+    - name: "北京卫视4K"
+    - name: "江苏卫视4K"
+    - name: "浙江卫视4K"
+    - name: "湖南卫视4K"
+    - name: "广东卫视4K"
+    - name: "深圳卫视4K"
+    - name: "山东卫视4K"
+    - name: "四川卫视4K"
+    - name: "欢笑剧场4K"
+    - name: "BesTV4K电影"
+    - name: "BesTV4K动画"
+    - name: "BesTV4K记录"
+
+#oss:
+#  enable: false
+#  upload_cron: '0 20 0,8,16 * * *' # 每天 0，8，16 点 20 分执行
+#  endpoint: 'https://xxxxxxxxxx.cos.ap-shanghai.myqcloud.com'
+#  access-key: 'xxxxxxxxx'
+#  secret-key: 'xxxxxxxxx'
+
+oss:
+  enable: false
+  upload_cron: '0 20 0,8,16 * * *'
+  endpoint: 'xxx.com'
+  use-ssl: false
+  bucket: 'epg'
+  access-key: 'xxxxxxxxx'
+  secret-key: 'xxxxxxxxx'
+
+# redis configuration
+redis:
+  db: 0
+  addr: '10.0.0.10:6379'
+  password: ''
+
+cache:
+  type: memory    # memory、redis
+  prefix: 'CM'
+  memory_interval: 60        # 使用内存缓存时生效, 内存回收间隔
+  default_timeout: 240       # 默认缓存时间 单位：分钟
+
+# mysql connect configuration
+mysql:
+  path: '127.0.0.1'
+  config: 'parseTime=True'
+  db-name: 'iptv_spider'
+  username: 'spider'
+  password: 'sh-tel-spider'
+  max-idle-conns: 10
+  max-open-conns: 100
+  log-mode: 'error'
+  log-zap: false
+
+# zap logger configuration
+zap:
+  level: 'info'
+  format: 'console'
+  prefix: '[iptv-spider-sh]'
+  director: 'log'
+  link-name: 'latest_log'
+  show-line: false
+  encode-level: 'LowercaseColorLevelEncoder'
+  stacktrace-key: 'stacktrace'
+  log-in-console: true
+
+
