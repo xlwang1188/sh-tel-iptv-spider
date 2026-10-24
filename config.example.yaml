@@ -32,21 +32,93 @@ epg:
       name: "东方卫视4K"
       logo: "东方卫视4K.png"
       group: "4K频道"
-    - id: '124'
-      igmp: 'igmp://233.18.204.188:5140'
-      name: "CCTV-4K"
-      logo: "CCTV4K.png"
+    - id: '100'
+      igmp: 'igmp://233.18.204.115:5140'
+      name: "欢笑剧场4K"
+      logo: "欢笑剧场4K.png"
+      group: "4K频道"
+    - id: '105'
+      igmp: 'igmp://233.18.204.169:5140'
+      name: "BesTV4K电影"
+      logo: "BesTV4K电影.png"
+      group: "4K频道"
+    - id: '97'
+      igmp: 'igmp://233.18.204.170:5140'
+      name: "BesTV4K记录"
+      logo: "BesTV4K记录.png"
       group: "4K频道"
     - id: '139'
       igmp: 'igmp://233.18.204.114:5140'
       name: "CCTV16-4K"
       logo: "CCTV16-4K.png"
       group: "4K频道"
+    - id: '124'
+      igmp: 'igmp://233.18.204.188:5140'
+      name: "CCTV-4K"
+      logo: "CCTV4K.png"
+      group: "4K频道"
+    - id: '144'
+      igmp: 'igmp://233.18.204.209:5140'
+      name: "北京卫视4K"
+      logo: "北京卫视4K.png"
+      group: "4K频道"
+    - id: '145'
+      igmp: 'igmp://233.18.204.218:5140'
+      name: "广东卫视4K"
+      logo: "广东卫视4K.png"
+      group: "4K频道"
+    - id: '143'
+      igmp: 'igmp://233.18.204.227:5140'
+      name: "湖南卫视4K"
+      logo: "湖南卫视4K.png"
+      group: "4K频道"
+    - id: '142'
+      igmp: 'igmp://233.18.204.226:5140'
+      name: "江苏卫视4K"
+      logo: "江苏卫视4K.png"
+      group: "4K频道"
+    - id: '148'
+      igmp: 'igmp://233.18.204.228:5140'
+      name: "山东卫视4K"
+      logo: "山东卫视4K.png"
+      group: "4K频道"
+    - id: '146'
+      igmp: 'igmp://233.18.204.219:5140'
+      name: "深圳卫视4K"
+      logo: "深圳卫视4K.png"
+      group: "4K频道"
+    - id: '156'
+      igmp: 'igmp://233.18.204.225:5140'
+      name: "四川卫视4K"
+      logo: "四川卫视4K.png"
+      group: "4K频道"
+    - id: '141'
+      igmp: 'igmp://233.18.204.229:5140'
+      name: "浙江卫视4K"
+      logo: "浙江卫视4K.png"
+      group: "4K频道"
+    - id: '104'
+      igmp: 'igmp://233.18.204.171:5140'
+      name: "BesTV4K动画"
+      logo: "BesTV4K动画.png"
+      group: "4K频道"
 
   name_sequence: 
     - name: "CCTV-4K"
     - name: "CCTV16-4K"
     - name: "东方卫视4K"
+    - name: "北京卫视4K"
+    - name: "江苏卫视4K"
+    - name: "浙江卫视4K"
+    - name: "湖南卫视4K"
+    - name: "广东卫视4K"
+    - name: "深圳卫视4K"
+    - name: "山东卫视4K"
+    - name: "四川卫视4K"
+    - name: "欢笑剧场4K"
+    - name: "BesTV4K电影"
+    - name: "BesTV4K动画"
+    - name: "BesTV4K记录"
 
 cache:
   type: memory
